@@ -1,0 +1,60 @@
+public class GuestReservationController {
+    public List<Guest_Profile__c> guestProfiles { get set }
+    public List<Reservation__c> reservations { get set }
+    public List<Service_Request__c> serviceRequests { get set }
+    public String searchKeyword { get set }
+    public Id selectedGuestId { get set }
+    public Id selectedReservationId { get set }
+    public Id selectedServiceRequestId { get set }
+    
+    public GuestReservationController(ApexPages.StandardController stdController) {
+        searchKeyword = ''
+        fetchGuestProfiles()
+        serviceRequests = null // Initialize serviceRequests to null
+    }
+
+    public void fetchGuestProfiles() {
+        String query = 'SELECT Id, Name, Guest_Name__c, Email__c, Contact_Number__c, Preferences__c, Special_Occasions__c, ' +
+                       '(SELECT Id, Name, Check_Out_Date__c, Check_In_Date__c, Reservation_Date__c, Room_Size__c, Room_Type__c, Status__c, Total_Guests__c ' +
+                       'FROM Reservations__r), ' + 
+                       '(SELECT Id, Name, Request_Type__c ' +
+                       'FROM Service_Requests__r) ' + 
+                       'FROM Guest_Profile__c'
+        
+        if (!String.isEmpty(searchKeyword)) {
+            query += ' WHERE Name LIKE \'%' + String.escapeSingleQuotes(searchKeyword) + '%\' OR Guest_Name__c LIKE \'%' + String.escapeSingleQuotes(searchKeyword) + '%\''
+        }
+        
+        guestProfiles = Database.query(query)
+    }
+
+    public PageReference search() {
+        fetchGuestProfiles()
+        return null
+    }
+
+    public PageReference editGuest() {
+        PageReference editPage = new PageReference('/' + selectedGuestId + '/e')
+        editPage.setRedirect(true)
+        return editPage
+    }
+
+    public PageReference editReservation() {
+        PageReference editPage = new PageReference('/' + selectedReservationId + '/e')
+        editPage.setRedirect(true)
+        return editPage
+    }
+
+    public PageReference editServiceRequest() {
+        PageReference editPage = new PageReference('/' + selectedServiceRequestId + '/e')
+        editPage.setRedirect(true)
+        return editPage
+    }
+    
+    public void viewServiceRequests() {
+        if (selectedReservationId != null) {
+            String query = 'SELECT Id, Name, Request_Type__c, Details__c, Closed_Date__c, Status__c,Priority__c FROM Service_Request__c WHERE Reservation_ID__c = selectedReservationId'
+            serviceRequests = Database.query(query)
+        }
+    }
+}
