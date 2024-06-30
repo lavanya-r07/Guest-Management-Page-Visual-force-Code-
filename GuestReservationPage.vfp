@@ -1,0 +1,136 @@
+<apexpage standardController="Guest_Profile__c" extensions="GuestReservationController">
+    <apexform >
+      <apexpageBlock title="Guest Profiles">
+            <!-- Search Bar -->
+            <apexpageBlockSection >
+                <apexinputText value="{!searchKeyword}" label="Search by Name or Guest Name" />
+                <apexcommandButton value="Search" action="{!search}" reRender="guestProfilesTable" style="margin-left 10px" />
+            </apexpageBlockSection>
+            
+            <!-- Guest Profiles Table -->
+            <apexpageBlockTable value="{!guestProfiles}" var="guest" id="guestProfilesTable" style="background-colorlightpink">
+                <apexcolumn headerValue="GP Option">
+                    <apexcommandButton value="Edit" action="{!editGuest}" reRender="none">
+                        <apexparam name="guestId" value="{!guest.Id}" assignTo="{!selectedGuestId}"/>
+                    </apexcommandButton>
+                </apexcolumn>
+                <apexcolumn headerValue="Show Reservations">
+                    <apexcommandButton value="Show Reservations" onclick="toggleDetails('{!guest.Id}') return false" />
+                </apexcolumn>
+                <apexcolumn headerValue="Name" >
+                    <apexoutputText value="{!guest.Name}" />
+                </apexcolumn>
+                
+                <apexcolumn headerValue="Guest Name">
+                    <apexoutputText value="{!guest.Guest_Name__c}" />
+                </apexcolumn>
+                <apexcolumn headerValue="Email">
+                    <apexoutputText value="{!guest.Email__c}" />
+                </apexcolumn>
+                <apexcolumn headerValue="Contact Number">
+                    <apexoutputText value="{!guest.Contact_Number__c}" />
+                </apexcolumn>
+                <apexcolumn headerValue="Preference">
+                    <apexoutputText value="{!guest.Preferences__c}" />
+                </apexcolumn>
+                <apexcolumn headerValue="Special Occasions">
+                    <apexoutputText value="{!guest.Special_Occasions__c}" />
+                </apexcolumn>
+            </apexpageBlockTable>
+            <br/>
+            <!-- Hidden reservation and service request details -->
+            <apexrepeat value="{!guestProfiles}" var="guest">
+                <div id="details_{!guest.Id}" style="displaynone margin-left 30px">
+                    <!-- Reservations -->
+                    <apexpageBlock title="Reservation">
+                        <apexpageBlockTable value="{!guest.Reservations__r}" var="reservation" style="background-colorlightblue">
+                            <apexcolumn headerValue="Option">
+                                <apexcommandButton value="Edit" action="{!editReservation}" reRender="none">
+                                    <apexparam name="reservationId" value="{!reservation.Id}" assignTo="{!selectedReservationId}"/>
+                                </apexcommandButton>
+                            </apexcolumn>
+                            <apexcolumn headerValue="Service Requests">
+                                <apexcommandButton value="Service Requests" action="{!viewServiceRequests}" reRender="serviceRequestTable">
+                                    <apexparam name="reservationId" value="{!reservation.Id}" assignTo="{!selectedReservationId}"/>
+                                </apexcommandButton>
+                            </apexcolumn>
+                            <apexcolumn headerValue="Reservation Name">
+                                <apexoutputText value="{!reservation.Name}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Check-Out Date">
+                                <apexoutputText value="{!reservation.Check_Out_Date__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Check-In Date">
+                                <apexoutputText value="{!reservation.Check_In_Date__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Reservation Date">
+                                <apexoutputText value="{!reservation.Reservation_Date__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Room Size">
+                                <apexoutputText value="{!reservation.Room_Size__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Room Type">
+                                <apexoutputText value="{!reservation.Room_Type__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Status">
+                                <apexoutputText value="{!reservation.Status__c}" />
+                            </apexcolumn>
+                            <apexcolumn headerValue="Total Guests">
+                                <apexoutputText value="{!reservation.Total_Guests__c}" />
+                            </apexcolumn>
+                        </apexpageBlockTable>
+                    </apexpageBlock>
+                    <!-- Service Requests -->
+                    <apexoutputPanel id="serviceRequestTable" layout="block">
+                        <apexpageBlock title="Service Requests" rendered="{!NOT(ISNULL(serviceRequests))}">
+                            <apexpageBlockTable value="{!serviceRequests}" var="serviceRequest" style="background-colorlightgreen">
+                                <apexcolumn headerValue="Option">
+                                    <apexcommandButton value="Edit" action="{!editServiceRequest}" reRender="none">
+                                        <apexparam name="serviceRequestId" value="{!serviceRequest.Id}" assignTo="{!selectedServiceRequestId}"/>
+                                    </apexcommandButton>
+                                </apexcolumn>
+                                <apexcolumn headerValue="Request Name">
+                                    <apexoutputText value="{!serviceRequest.Name}" />
+                                </apexcolumn>
+                                <apexcolumn headerValue="Request Type">
+                                    <apexoutputText value="{!serviceRequest.Request_Type__c}" />
+                                </apexcolumn>
+                                 <apexcolumn headerValue="Status">
+                                    <apexoutputText value="{!serviceRequest.Status__c}" />
+                                </apexcolumn>
+                                 <apexcolumn headerValue="Priority__c">
+                                    <apexoutputText value="{!serviceRequest.Priority__c}" />
+                                </apexcolumn>
+                                 <apexcolumn headerValue="Detail">
+                                    <apexoutputText value="{!serviceRequest.Details__c}" />
+                                </apexcolumn>
+                                 <apexcolumn headerValue="Closed Date">
+                                    <apexoutputText value="{!serviceRequest.Closed_Date__c}" />
+                                </apexcolumn>
+                            </apexpageBlockTable>
+                        </apexpageBlock>
+                    </apexoutputPanel>
+                </div>
+            </apexrepeat>
+        </apexpageBlock>
+    </apexform>
+    
+    <script>
+    var currentVisibleId = null
+    
+    function toggleDetails(guestId) {
+        if (currentVisibleId !== null && currentVisibleId !== guestId) {
+            document.getElementById('details_' + currentVisibleId).style.display = 'none'
+        }
+        
+        var elem = document.getElementById('details_' + guestId)
+        if (elem.style.display === 'none') {
+            elem.style.display = 'block'
+            currentVisibleId = guestId
+        } else {
+            elem.style.display = 'none'
+            currentVisibleId = null
+        }
+    }
+    </script>
+</apexpage>
